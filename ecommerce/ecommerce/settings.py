@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'account',  # DJANGO APP
     'mathfilters',
     'crispy_forms',
+    'payment',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -144,3 +145,5 @@ EMAIL_PORT = '587'
 EMAIL_USE_TLS = 'True'
 EMAIL_HOST_USER = 'tavoskt17@gmail.com'
 EMAIL_HOST_PASSWORD = 'axmh xyns jrlh ilbi'
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popus'

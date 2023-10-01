@@ -1,5 +1,8 @@
 from django.shortcuts import redirect, render
 from . forms import CreateUserForm, LoginForm, UpdateUserForm
+from payment.forms import ShippingForm
+from payment.models import ShippingAddress, OrderItem
+
 from django.contrib.sites.shortcuts import get_current_site
 
 from django.contrib.auth.models import User
@@ -11,8 +14,10 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from django.contrib.auth.models import auth
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
+
+from django.contrib import messages
 
 
 def register(request):
@@ -101,6 +106,7 @@ def login(request):
 
 def logout(request):
     auth.logout(request)
+    messages.success(request, "Logout success")
     return redirect('store')
 
 # name in url
@@ -124,6 +130,7 @@ def profile_managment(request):
         if user_form.is_valid():
             user_form.save()
 
+            messages.info(request, 'Account updated')
             # name parameters in url
             return redirect('dashboard')
 
@@ -141,6 +148,53 @@ def delete_account(request):
 
         user.delete()
 
+        messages.success(request, 'Account Deleted')
+
         return redirect('store')
 
     return render(request, 'account/delete-account.html')
+
+
+@login_required(login_url='login')
+def manage_shipping(request):
+    try:
+        # Account user with shipment information
+        shipping = ShippingAddress.objects.get(user=request.user.id)
+    except ShippingAddress.DoesNotExist:
+        # Account user with no shipmnet information
+        shipping = None
+
+    form = ShippingForm(instance=shipping)
+
+    if request.method == 'POST':
+        form = ShippingForm(request.POST, instance=shipping)
+
+        if form.is_valid():
+            # Assign the user FK on the object
+            shipping_user = form.save(commit=False)
+            # Adding the FK itself
+            shipping_user.user = request.user
+
+            shipping_user.save()
+
+            return redirect('dashboard')
+
+    context = {'form': form}
+
+    return render(request, 'account/manage-shipping.html', context)
+
+
+@login_required(login_url='login')
+def track_orders(request):
+
+    try:
+
+        orders = OrderItem.objects.filter(user=request.user)
+
+        context = {'orders': orders}
+
+        return render(request, 'account/track-orders.html', context=context)
+
+    except:
+
+        return render(request, 'account/track-orders.html')
